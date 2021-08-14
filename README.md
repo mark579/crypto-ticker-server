@@ -1,2 +1,4 @@
-# crypto-ticker-server
-A backend for managing configuration for a the crypto ticker
+# Crypto Ticker Server
+
+This is a server for configuration of the Crypto Ticker
+
