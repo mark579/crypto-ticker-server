@@ -16,3 +16,6 @@
 
 # The actual binary
 crypto-ticker-server
+
+# Any config files
+config/*
