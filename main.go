@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -10,11 +12,14 @@ import (
 // Config represents all configuration options for the ticker
 type Config struct {
 	Ticker struct {
+		UUID       string   `json:"uuid"`
 		VsCurrency string   `json:"vs_currency"`
 		TellJokes  bool     `json:"tell_jokes"`
 		Crypto     []string `json:"crypto"`
-	}
+	} `json:"ticker"`
 }
+
+var BEARER_TOKEN string
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Ready to Serve Crypto Ticker!")
@@ -25,7 +30,25 @@ func configHandler(w http.ResponseWriter, r *http.Request) {
 	case "GET":
 		loadConfig(r, w)
 	case "POST":
-		w.Write([]byte("Got your post bro."))
+		token := r.Header.Get("Authorization")
+		fmt.Println(token)
+		if token != fmt.Sprintf("Bearer %v", BEARER_TOKEN) {
+			http.Error(w, "Incorrect Credentials", http.StatusUnauthorized)
+			return
+		}
+		config := Config{}
+		err := json.NewDecoder(r.Body).Decode(&config)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		json, err := json.Marshal(config)
+		err = ioutil.WriteFile(fmt.Sprintf("config/%v.json", config.Ticker.UUID), json, 0644)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Write([]byte("Configuration successfully saved."))
 	}
 }
 
@@ -54,6 +77,11 @@ func loadConfig(r *http.Request, w http.ResponseWriter) {
 
 func main() {
 	log.SetOutput(os.Stdout)
+	BEARER_TOKEN = os.Getenv("BEARER_TOKEN")
+	if len(BEARER_TOKEN) == 0 {
+		fmt.Println("BEARER TOKEN MUST BE SET. Exiting.")
+		return
+	}
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/config", configHandler)
 	fmt.Printf("Listening on port 8080")

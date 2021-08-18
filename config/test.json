@@ -1,5 +1,6 @@
 {
     "ticker": {
+        "guid": "test",
         "tell_jokes": true,
         "vs_currency": "usd",
         "crypto": ["btc", "doge"]
