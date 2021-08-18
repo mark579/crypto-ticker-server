@@ -1,8 +1,1 @@
-{
-    "ticker": {
-        "guid": "test",
-        "tell_jokes": true,
-        "vs_currency": "usd",
-        "crypto": ["btc", "doge"]
-    }
-}
+{"ticker":{"uuid":"test","vs_currency":"usd","tell_jokes":false,"crypto":["bitcoin","dogecoin"]}}

@@ -19,10 +19,61 @@ type Config struct {
 	} `json:"ticker"`
 }
 
+type Register struct {
+	UUID string `json:"uuid"`
+}
+
 var BEARER_TOKEN string
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Ready to Serve Crypto Ticker!")
+}
+
+func defaultConfig(uuid string) Config {
+	defaults := Config{}
+	defaults.Ticker.UUID = uuid
+	defaults.Ticker.VsCurrency = "usd"
+	defaults.Ticker.TellJokes = true
+	defaults.Ticker.Crypto = []string{"bitcoin", "dogecoin", "ethereum"}
+
+	return defaults
+}
+
+func registerHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		http.Error(w, "Unsupported Method", http.StatusBadRequest)
+		return
+	case "POST":
+		token := r.Header.Get("Authorization")
+		if token != fmt.Sprintf("Bearer %v", BEARER_TOKEN) {
+			http.Error(w, "Incorrect Credentials", http.StatusUnauthorized)
+			return
+		}
+		device := Register{}
+		err := json.NewDecoder(r.Body).Decode(&device)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		fileName := fmt.Sprintf("config/%v.json", device.UUID)
+		if _, err := os.Stat(fileName); err == nil {
+			http.Error(w, "Device is already registered", http.StatusOK)
+			return
+		} else if os.IsNotExist(err) {
+			newConfig := defaultConfig(device.UUID)
+			json, err := json.Marshal(newConfig)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			err = ioutil.WriteFile(fileName, json, 0644)
+			w.Write([]byte("Device Registered"))
+			return
+		} else {
+			http.Error(w, "Something bad happened. Try again.", http.StatusInternalServerError)
+		}
+	}
 }
 
 func configHandler(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +82,6 @@ func configHandler(w http.ResponseWriter, r *http.Request) {
 		loadConfig(r, w)
 	case "POST":
 		token := r.Header.Get("Authorization")
-		fmt.Println(token)
 		if token != fmt.Sprintf("Bearer %v", BEARER_TOKEN) {
 			http.Error(w, "Incorrect Credentials", http.StatusUnauthorized)
 			return
@@ -43,12 +93,18 @@ func configHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		json, err := json.Marshal(config)
-		err = ioutil.WriteFile(fmt.Sprintf("config/%v.json", config.Ticker.UUID), json, 0644)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+
+		fileName := fmt.Sprintf("config/%v.json", config.Ticker.UUID)
+		if _, err := os.Stat(fileName); err == nil {
+			err = ioutil.WriteFile(fileName, json, 0644)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			w.Write([]byte("Configuration successfully saved."))
+		} else {
+			http.Error(w, "Device is not registered. Must be registered before config can be saved.", http.StatusForbidden)
 		}
-		w.Write([]byte("Configuration successfully saved."))
 	}
 }
 
@@ -61,7 +117,6 @@ func loadConfig(r *http.Request, w http.ResponseWriter) {
 		w.Write([]byte("A UUID must be provided"))
 	} else {
 		fileName := fmt.Sprintf("config/%v.json", uuid)
-		fmt.Println(fileName)
 		if _, err := os.Stat(fileName); err == nil {
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			http.ServeFile(w, r, fileName)
@@ -84,6 +139,7 @@ func main() {
 	}
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/config", configHandler)
+	http.HandleFunc("/register", registerHandler)
 	fmt.Printf("Listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 
