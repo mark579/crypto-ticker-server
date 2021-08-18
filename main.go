@@ -21,8 +21,18 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func configHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		loadConfig(r, w)
+	case "POST":
+		w.Write([]byte("Got your post bro."))
+	}
+}
+
+func loadConfig(r *http.Request, w http.ResponseWriter) {
 	query := r.URL.Query()
 	uuid := query.Get("UUID")
+
 	if len(uuid) == 0 {
 		w.WriteHeader(400)
 		w.Write([]byte("A UUID must be provided"))
