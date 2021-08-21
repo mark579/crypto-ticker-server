@@ -24,6 +24,7 @@ type Register struct {
 }
 
 var BEARER_TOKEN string
+var CONFIG_PATH string
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Ready to Serve Crypto Ticker!")
@@ -57,7 +58,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		fileName := fmt.Sprintf("config/%v.json", device.UUID)
+		fileName := fmt.Sprintf("%v%v.json", CONFIG_PATH, device.UUID)
 		if _, err := os.Stat(fileName); err == nil {
 			http.Error(w, "Device is already registered", http.StatusOK)
 			return
@@ -94,7 +95,7 @@ func configHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		json, err := json.Marshal(config)
 
-		fileName := fmt.Sprintf("config/%v.json", config.Ticker.UUID)
+		fileName := fmt.Sprintf("%v%v.json", CONFIG_PATH, config.Ticker.UUID)
 		if _, err := os.Stat(fileName); err == nil {
 			err = ioutil.WriteFile(fileName, json, 0644)
 			if err != nil {
@@ -116,7 +117,7 @@ func loadConfig(r *http.Request, w http.ResponseWriter) {
 		w.WriteHeader(400)
 		w.Write([]byte("A UUID must be provided"))
 	} else {
-		fileName := fmt.Sprintf("config/%v.json", uuid)
+		fileName := fmt.Sprintf("%v%v.json", CONFIG_PATH, uuid)
 		if _, err := os.Stat(fileName); err == nil {
 			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			http.ServeFile(w, r, fileName)
@@ -133,6 +134,12 @@ func loadConfig(r *http.Request, w http.ResponseWriter) {
 func main() {
 	log.SetOutput(os.Stdout)
 	BEARER_TOKEN = os.Getenv("BEARER_TOKEN")
+	CONFIG_PATH = os.Getenv("CONFIG_PATH")
+
+	if len(CONFIG_PATH) == 0 {
+		CONFIG_PATH = "config/"
+	}
+
 	if len(BEARER_TOKEN) == 0 {
 		fmt.Println("BEARER TOKEN MUST BE SET. Exiting.")
 		return
