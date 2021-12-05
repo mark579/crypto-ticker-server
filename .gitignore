@@ -19,3 +19,6 @@ crypto-ticker-server
 
 # Any config files
 config/*
+
+# File used to create secret
+kube/bearer-token.txt

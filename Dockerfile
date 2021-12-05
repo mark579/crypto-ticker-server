@@ -1,4 +1,4 @@
-FROM golang:1.15-alpine3.12 as BUILD
+FROM golang:1.17-alpine as BUILD
 WORKDIR /opt/crypto-ticker-server
 COPY . .
 RUN apk add git 

@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: crypto-ticker-server
+  labels:
+    app: crypto-ticker-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: crypto-ticker-server
+  template:
+    metadata:
+      labels:
+        app: crypto-ticker-server
+    spec:
+      containers:
+      - name: crypto-ticker-server
+        image: madsunshinecreations/crypto-ticker-server
+        ports:
+        - containerPort: 8080
+        env:
+          - name: BEARER_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: bearer-token
+                key: bearer-token
