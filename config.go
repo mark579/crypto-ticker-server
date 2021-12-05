@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"log"
 )
 
 // Config represents all configuration options for the ticker

@@ -17,11 +17,20 @@ spec:
       containers:
       - name: crypto-ticker-server
         image: madsunshinecreations/crypto-ticker-server
+        volumeMounts:
+        - name: crypto-ticker-storage
+          mountPath: /config
         ports:
         - containerPort: 8080
         env:
+          - name: CONFIG_PATH
+            value: "/config"
           - name: BEARER_TOKEN
             valueFrom:
               secretKeyRef:
                 name: bearer-token
                 key: bearer-token
+      volumes:
+      - name: crypto-ticker-storage
+        persistentVolumeClaim:
+          claimName: crypto-ticker-storage

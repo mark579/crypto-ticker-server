@@ -34,7 +34,7 @@ func main() {
 	http.HandleFunc("/config", configHandler)
 	http.HandleFunc("/register", registerHandler)
 	http.HandleFunc("/coins", cryptoClient.coinsHandler)
-	fmt.Printf("Listening on port 8080")
+	log.Printf("Listening on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 
 }
