@@ -24,7 +24,7 @@ spec:
         - containerPort: 8080
         env:
           - name: CONFIG_PATH
-            value: "/config"
+            value: "/config/"
           - name: BEARER_TOKEN
             valueFrom:
               secretKeyRef:
