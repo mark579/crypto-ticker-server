@@ -61,6 +61,9 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 			err = ioutil.WriteFile(fileName, json, 0644)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
 			w.Write([]byte("Device Registered"))
 			return
 		} else {
